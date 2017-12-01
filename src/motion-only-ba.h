@@ -1,8 +1,8 @@
-#ifndef ORBG2O_H
-#define ORBG2O_H
+#ifndef MOTION_ONLY_BA_H
+#define MOTION_ONLY_BA_H
 
 #include <Eigen/StdVector>
 
 int poseOptimization(Eigen::Ref<Eigen::MatrixXd> coords, Eigen::Ref<Eigen::MatrixXd> pose);
 
-#endif // OPTIMIZER_H
+#endif // MOTION_ONLY_BA_H
