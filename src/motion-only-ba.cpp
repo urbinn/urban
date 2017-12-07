@@ -68,7 +68,7 @@ int poseOptimization(Eigen::Ref<Eigen::MatrixXd> coords, Eigen::Ref<Eigen::Matri
     // Set MapPoint vertices
     const int N = coords.rows();
 
-    cout << "size " << N << std::endl;
+    //cout << "size " << N << std::endl;
 
     // added mvbOutlier
     vector<bool> mvbOutlier = vector<bool>(N, false);
@@ -113,11 +113,14 @@ int poseOptimization(Eigen::Ref<Eigen::MatrixXd> coords, Eigen::Ref<Eigen::Matri
                 e->fy = CameraFy;
                 e->cx = CameraCx;
                 e->cy = CameraCy;
-                cv::Mat Xw = UnprojectStereo(coords(i, 1), coords(i, 2), coords(i, 3));
+                //cv::Mat Xw = UnprojectStereo(coords(i, 1), coords(i, 2), coords(i, 3));
 
-                e->Xw[0] = Xw.at<float>(0, 0);
-                e->Xw[1] = Xw.at<float>(1, 0);
-                e->Xw[2] = Xw.at<float>(2, 0);
+                //e->Xw[0] = Xw.at<float>(0, 0);
+                //e->Xw[1] = Xw.at<float>(1, 0);
+                //e->Xw[2] = Xw.at<float>(2, 0);
+                e->Xw[0] = coords(i, 1);
+                e->Xw[1] = coords(i, 2);
+                e->Xw[2] = coords(i, 3);
 
                 optimizer.addEdge(e);
 
@@ -133,7 +136,7 @@ int poseOptimization(Eigen::Ref<Eigen::MatrixXd> coords, Eigen::Ref<Eigen::Matri
 
     // We perform 4 optimizations, after each optimization we classify observation as inlier/outlier
     // At the next optimization, outliers are not included, but at the end they can be classified as inliers again.
-    const float chi2Mono[4]={5.991,5.991,5.991,5.991};
+    const float chi2Mono[4]={4 * 5.991, 4 * 5.991, 4 * 5.991, 4 * 5.991};
     const float chi2Stereo[4]={7.815,7.815,7.815, 7.815};
     const int its[4]={10,10,10,10};    
 
@@ -145,9 +148,9 @@ int poseOptimization(Eigen::Ref<Eigen::MatrixXd> coords, Eigen::Ref<Eigen::Matri
         optimizer.initializeOptimization(0);
         optimizer.optimize(its[it]);
 
-        nBad=0;
-
-        cout << "vpEdgesMono" << vpEdgesMono.size() << std::endl;
+        //cout << "vpEdgesMono" << (vpEdgesMono.size() - nBad) << std::endl;
+        float threshold = chi2Mono[it];
+	nBad=0;
 
         for(size_t i=0, iend=vpEdgesMono.size(); i<iend; i++)
         {
@@ -162,7 +165,7 @@ int poseOptimization(Eigen::Ref<Eigen::MatrixXd> coords, Eigen::Ref<Eigen::Matri
 
             const float chi2 = e->chi2();
 
-            if(chi2>chi2Mono[it])
+            if(chi2 > threshold)
             {                
                 mvbOutlier[idx]=true;
                 e->setLevel(1);
@@ -174,13 +177,20 @@ int poseOptimization(Eigen::Ref<Eigen::MatrixXd> coords, Eigen::Ref<Eigen::Matri
                 e->setLevel(0);
             }
 
-            if(it==2)
-                e->setRobustKernel(0);
         }
+	if (nBad == vpEdgesMono.size())
+		break;
+        if(it==2) {
+          for(size_t i=0, iend=vpEdgesMono.size(); i<iend; i++)
+          {
+              g2o::EdgeSE3ProjectXYZOnlyPose* e = vpEdgesMono[i];
+              e->setRobustKernel(0);
+	  }
+	}
     }
     // Recover optimized pose and return number of inliers
     int numberGoodPoints = nInitialCorrespondences-nBad;
-    cout << "number of remaining points " << numberGoodPoints << std::endl;
+    //cout << "number of remaining points " << numberGoodPoints << std::endl;
        g2o::VertexSE3Expmap* vSE3_recov = static_cast<g2o::VertexSE3Expmap*>(optimizer.vertex(0));
        g2o::SE3Quat SE3quat_recov = vSE3_recov->estimate();
        pose = SE3quat_recov.to_homogeneous_matrix();
