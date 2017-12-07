@@ -5,7 +5,7 @@ SET(CMAKE_CXX_STANDARD 11)
 SET(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 SET(LIBRARY_NAME "urbg2o")
-SET(SOURCES "src/motion-only-ba.cpp" "src/bind.cpp")
+SET(SOURCES "src/motion-only-ba.cpp" "src/bind.cpp" "src/local-ba.cpp")
 
 LIST(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake_modules)
 
